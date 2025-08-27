@@ -26,6 +26,8 @@ class EnhancedDocsHandler(BaseHTTPRequestHandler):
             self.serve_api_search(query.get('q', [''])[0])
         elif path == '/api/files':
             self.serve_api_files()
+        elif path == '/api/content-analysis':
+            self.serve_content_analysis()
         elif path.startswith('/file/'):
             file_path = urllib.parse.unquote(path[6:])  # Remove '/file/'
             self.serve_file(file_path)
@@ -43,10 +45,53 @@ class EnhancedDocsHandler(BaseHTTPRequestHandler):
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Documentation Browser</title>
     <style>
+        :root {
+            /* Fluid Typography */
+            --font-xs: clamp(0.75rem, 0.875vw, 0.875rem);
+            --font-sm: clamp(0.875rem, 1vw, 1rem);
+            --font-base: clamp(1rem, 1.125vw, 1.125rem);
+            --font-lg: clamp(1.125rem, 1.25vw, 1.25rem);
+            --font-xl: clamp(1.25rem, 1.5vw, 1.5rem);
+            --font-2xl: clamp(1.5rem, 2vw, 2rem);
+            --font-3xl: clamp(2rem, 2.5vw, 2.5rem);
+            
+            /* Animation Tokens */
+            --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-base: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-slow: 350ms cubic-bezier(0.4, 0, 0.2, 1);
+            --easing-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            
+            /* Spacing */
+            --space-1: 0.25rem;
+            --space-2: 0.5rem;
+            --space-3: 0.75rem;
+            --space-4: 1rem;
+            --space-6: 1.5rem;
+            --space-8: 2rem;
+            --space-12: 3rem;
+            --space-16: 4rem;
+            
+            /* Semantic Colors */
+            --color-roadmap: #e53e3e;
+            --color-technical: #667eea;
+            --color-essay: #38a169;
+            --color-analysis: #d69e2e;
+            --color-project: #9f7aea;
+            --color-memo: #0bc5ea;
+        }
+        
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+        }
+        
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
         }
         
         body {
@@ -55,30 +100,127 @@ class EnhancedDocsHandler(BaseHTTPRequestHandler):
             color: #2d3748;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
+            font-size: var(--font-base);
         }
         
-        .container {
-            max-width: 1200px;
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr 320px;
+            gap: var(--space-6);
+            max-width: 1400px;
             margin: 0 auto;
-            padding: 2rem;
+            padding: var(--space-8);
+        }
+        
+        .primary-content {
+            min-width: 0;
+        }
+        
+        .auxiliary-sidebar {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: var(--space-6);
+            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);
+            position: sticky;
+            top: var(--space-8);
+            max-height: calc(100vh - var(--space-16));
+            overflow-y: auto;
+            transition: all var(--transition-base);
+        }
+        
+        @media (max-width: 1024px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+                padding: var(--space-4);
+            }
+            .auxiliary-sidebar {
+                order: -1;
+                position: static;
+                max-height: none;
+            }
         }
         
         .header {
             text-align: center;
-            margin-bottom: 3rem;
+            margin-bottom: var(--space-12);
             color: white;
         }
         
         .header h1 {
-            font-size: 3rem;
+            font-size: var(--font-3xl);
             font-weight: 700;
-            margin-bottom: 1rem;
+            margin-bottom: var(--space-4);
             text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            animation: fadeInUp 0.6s var(--easing-bounce);
         }
         
         .header p {
-            font-size: 1.2rem;
+            font-size: var(--font-lg);
             opacity: 0.9;
+            animation: fadeInUp 0.6s var(--easing-bounce) 0.2s both;
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .breadcrumbs {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 8px;
+            padding: var(--space-3) var(--space-4);
+            margin-bottom: var(--space-6);
+            color: white;
+            font-size: var(--font-sm);
+            transition: all var(--transition-fast);
+        }
+        
+        .breadcrumbs:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+        
+        .breadcrumb-item {
+            display: inline-block;
+            opacity: 0.7;
+            transition: opacity var(--transition-fast);
+        }
+        
+        .breadcrumb-item:hover {
+            opacity: 1;
+        }
+        
+        .breadcrumb-separator {
+            margin: 0 var(--space-2);
+            opacity: 0.5;
+        }
+        
+        .pin-toggle {
+            float: right;
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            padding: var(--space-1);
+            border-radius: 4px;
+            transition: all var(--transition-fast);
+        }
+        
+        .pin-toggle:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.1);
+        }
+        
+        .pin-toggle.pinned {
+            color: #ffd700;
+            transform: rotate(15deg);
         }
         
         .search-section {
@@ -96,17 +238,48 @@ class EnhancedDocsHandler(BaseHTTPRequestHandler):
         
         .search-input {
             width: 100%;
-            padding: 1rem 1.5rem;
-            font-size: 1.1rem;
+            padding: var(--space-4) var(--space-6);
+            font-size: var(--font-lg);
             border: 2px solid #e2e8f0;
             border-radius: 12px;
             outline: none;
-            transition: all 0.2s;
+            transition: all var(--transition-base);
+            background: white;
         }
         
         .search-input:focus {
             border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1), 0 4px 12px rgba(0,0,0,0.1);
+            transform: translateY(-1px);
+        }
+        
+        .search-input.typing {
+            border-color: #38a169;
+            box-shadow: 0 0 0 3px rgba(56, 161, 105, 0.1);
+        }
+        
+        .search-status {
+            position: absolute;
+            right: var(--space-4);
+            top: 50%;
+            transform: translateY(-50%);
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity var(--transition-fast);
+        }
+        
+        .search-status.visible {
+            opacity: 1;
+        }
+        
+        .typing-indicator {
+            color: #38a169;
+            font-size: var(--font-sm);
+        }
+        
+        .search-count {
+            color: #718096;
+            font-size: var(--font-sm);
         }
         
         .search-btn {
@@ -150,21 +323,60 @@ class EnhancedDocsHandler(BaseHTTPRequestHandler):
         
         .file-item {
             display: block;
-            padding: 1rem;
+            padding: var(--space-4);
             background: #f7fafc;
-            border: 1px solid #e2e8f0;
+            border: 2px solid #e2e8f0;
             border-radius: 8px;
             text-decoration: none;
             color: #2d3748;
-            transition: all 0.2s;
+            transition: all var(--transition-base);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .file-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 4px;
+            background: var(--item-color, #667eea);
+            transform: translateX(-4px);
+            transition: transform var(--transition-base);
         }
         
         .file-item:hover {
             background: #edf2f7;
-            border-color: #667eea;
-            transform: translateY(-1px);
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+            border-color: var(--item-color, #667eea);
+            transform: translateY(-2px) scale(1.01);
+            box-shadow: 0 8px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
         }
+        
+        .file-item:hover::before {
+            transform: translateX(0);
+        }
+        
+        .file-item.pinned {
+            border-color: #ffd700;
+            background: linear-gradient(135deg, #fff9e6 0%, #f7fafc 100%);
+        }
+        
+        .file-item.pinned .pin-indicator {
+            position: absolute;
+            top: var(--space-2);
+            right: var(--space-2);
+            color: #ffd700;
+            font-size: var(--font-xs);
+        }
+        
+        /* Semantic tinting */
+        .file-item[data-type="roadmap"] { --item-color: var(--color-roadmap); }
+        .file-item[data-type="technical"] { --item-color: var(--color-technical); }
+        .file-item[data-type="essay"] { --item-color: var(--color-essay); }
+        .file-item[data-type="analysis"] { --item-color: var(--color-analysis); }
+        .file-item[data-type="project"] { --item-color: var(--color-project); }
+        .file-item[data-type="memo"] { --item-color: var(--color-memo); }
         
         .file-name {
             font-weight: 600;
@@ -474,6 +686,78 @@ class EnhancedDocsHandler(BaseHTTPRequestHandler):
             self.send_header('Content-type', 'application/json')
             self.end_headers()
             self.wfile.write(json.dumps({'error': 'Search timeout'}).encode())
+        except Exception as e:
+            self.send_response(500)
+            self.send_header('Content-type', 'application/json')
+            self.end_headers()
+            self.wfile.write(json.dumps({'error': str(e)}).encode())
+
+    def serve_content_analysis(self):
+        """Provide document analysis and clustering information"""
+        try:
+            # Use ripgrep to get a sample of document content for analysis
+            result = subprocess.run([
+                'rg', '--files', '--type', 'md', 
+                '--glob', '!node_modules/**',
+                '--glob', '!.git/**',
+                '--glob', '!**/node_modules/**',
+                '--glob', '!**/.git/**',
+                '--glob', '!backup/**',
+                '/home/uprootiny'
+            ], capture_output=True, text=True, timeout=10)
+            
+            files = []
+            if result.returncode == 0:
+                files = [line.strip() for line in result.stdout.strip().split('\n') if line]
+            
+            # Simple clustering by filename patterns
+            clusters = {}
+            for file_path in files:
+                filename = os.path.basename(file_path).lower()
+                
+                if 'roadmap' in filename or 'plan' in filename:
+                    cluster_type = 'roadmap'
+                elif 'technical' in filename or 'architecture' in filename or 'api' in filename:
+                    cluster_type = 'technical'
+                elif 'essay' in filename or 'thought' in filename:
+                    cluster_type = 'essay'
+                elif 'analysis' in filename or 'report' in filename or 'assessment' in filename:
+                    cluster_type = 'analysis'
+                elif 'project' in filename or 'implementation' in filename:
+                    cluster_type = 'project'
+                elif 'memo' in filename or 'note' in filename or 'brief' in filename:
+                    cluster_type = 'memo'
+                else:
+                    cluster_type = 'technical'
+                
+                if cluster_type not in clusters:
+                    clusters[cluster_type] = []
+                clusters[cluster_type].append({
+                    'path': file_path,
+                    'name': os.path.basename(file_path)
+                })
+            
+            # Format clusters for frontend
+            formatted_clusters = []
+            for cluster_type, documents in clusters.items():
+                formatted_clusters.append({
+                    'name': cluster_type.title(),
+                    'count': len(documents),
+                    'type': cluster_type,
+                    'documents': documents[:5]  # Limit for performance
+                })
+            
+            analysis = {
+                'clusters': formatted_clusters,
+                'total_documents': len(files),
+                'cluster_count': len(clusters)
+            }
+            
+            self.send_response(200)
+            self.send_header('Content-type', 'application/json')
+            self.end_headers()
+            self.wfile.write(json.dumps(analysis, indent=2).encode())
+            
         except Exception as e:
             self.send_response(500)
             self.send_header('Content-type', 'application/json')
