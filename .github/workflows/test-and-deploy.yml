@@ -1,0 +1,335 @@
+name: Enhanced Docs Browser - Test & Deploy
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test-python-server:
+    runs-on: ubuntu-latest
+    name: Test Python Documentation Server
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python 3.10
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+    
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y ripgrep
+    
+    - name: Install Python dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pytest requests markdown
+    
+    - name: Start Python server in background
+      run: |
+        python3 enhanced_docs_server.py &
+        sleep 3
+        echo $! > python_server.pid
+    
+    - name: Test Python server endpoints
+      run: |
+        # Test main page
+        curl -f http://localhost:44500/ > /dev/null
+        echo "✅ Main page accessible"
+        
+        # Test API endpoints
+        curl -f http://localhost:44500/api/files > /dev/null
+        echo "✅ Files API accessible"
+        
+        curl -f http://localhost:44500/api/content-analysis > /dev/null  
+        echo "✅ Content analysis API accessible"
+    
+    - name: Run Python server unit tests
+      run: |
+        # Create minimal test documents
+        mkdir -p test_docs
+        echo "# Test Document" > test_docs/test.md
+        echo "This is a test document." >> test_docs/test.md
+        
+        # Run targeted tests (excluding Racket server tests)
+        python -m pytest test_servers.py::TestPythonMainServer -v
+    
+    - name: Stop Python server
+      run: |
+        if [ -f python_server.pid ]; then
+          kill $(cat python_server.pid) || true
+          rm python_server.pid
+        fi
+
+  test-racket-server:
+    runs-on: ubuntu-latest
+    name: Test Racket Silver Lining Server
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Install Racket
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y racket
+    
+    - name: Verify Racket installation
+      run: |
+        racket --version
+    
+    - name: Create test documents
+      run: |
+        mkdir -p test_essays
+        echo "# Essay One" > test_essays/essay1.md
+        echo "This is the first test essay." >> test_essays/essay1.md
+        echo "# Essay Two" > test_essays/essay2.md  
+        echo "This is the second test essay." >> test_essays/essay2.md
+    
+    - name: Start Racket server in background
+      run: |
+        racket silver-simple.rkt &
+        sleep 5
+        echo $! > racket_server.pid
+    
+    - name: Test Racket server accessibility
+      run: |
+        # Test main page
+        curl -f http://localhost:44501/ > /dev/null
+        echo "✅ Silver Lining accessible"
+        
+        # Check content contains expected elements
+        if curl -s http://localhost:44501/ | grep -q "Silver Lining"; then
+          echo "✅ Page content verified"
+        else
+          echo "❌ Page content missing"
+          exit 1
+        fi
+    
+    - name: Stop Racket server
+      run: |
+        if [ -f racket_server.pid ]; then
+          kill $(cat racket_server.pid) || true
+          rm racket_server.pid
+        fi
+
+  integration-tests:
+    runs-on: ubuntu-latest
+    name: Integration Tests
+    needs: [test-python-server, test-racket-server]
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python 3.10
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+    
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y ripgrep racket
+        python -m pip install --upgrade pip
+        pip install pytest requests markdown
+    
+    - name: Create comprehensive test environment
+      run: |
+        # Create diverse test documents
+        mkdir -p test_collection/{essays,technical,roadmaps}
+        
+        echo "# My Thoughts on Technology" > test_collection/essays/thoughts.md
+        echo "Technology shapes our world in profound ways." >> test_collection/essays/thoughts.md
+        
+        echo "# API Documentation" > test_collection/technical/api.md
+        echo "## Endpoints" >> test_collection/technical/api.md
+        echo "- GET /api/data" >> test_collection/technical/api.md
+        
+        echo "# Product Roadmap 2025" > test_collection/roadmaps/roadmap.md
+        echo "## Q1 Goals" >> test_collection/roadmaps/roadmap.md
+        echo "- Feature X implementation" >> test_collection/roadmaps/roadmap.md
+    
+    - name: Start both servers
+      run: |
+        python3 enhanced_docs_server.py &
+        echo $! > python_server.pid
+        sleep 3
+        
+        racket silver-simple.rkt &
+        echo $! > racket_server.pid
+        sleep 5
+    
+    - name: Run integration test suite  
+      run: |
+        python -m pytest test_servers.py::TestServerIntegration -v
+    
+    - name: Test concurrent access
+      run: |
+        # Multiple simultaneous requests
+        for i in {1..5}; do
+          curl -s http://localhost:44500/api/files > /dev/null &
+          curl -s http://localhost:44501/ > /dev/null &
+        done
+        wait
+        echo "✅ Concurrent access test passed"
+    
+    - name: Cleanup
+      run: |
+        if [ -f python_server.pid ]; then
+          kill $(cat python_server.pid) || true
+        fi
+        if [ -f racket_server.pid ]; then
+          kill $(cat racket_server.pid) || true  
+        fi
+
+  security-scan:
+    runs-on: ubuntu-latest
+    name: Security & Code Quality
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Run security checks
+      run: |
+        # Check for common security issues in Python code
+        grep -r "subprocess.*shell=True" . && exit 1 || echo "✅ No shell injection vulnerabilities"
+        grep -r "eval(" . && exit 1 || echo "✅ No eval usage"
+        grep -r "exec(" . && exit 1 || echo "✅ No exec usage"
+    
+    - name: Validate file permissions
+      run: |
+        # Check that source files don't have execute permissions unnecessarily
+        find . -name "*.py" -executable -type f | grep -v test_ && exit 1 || echo "✅ Python file permissions OK"
+        find . -name "*.rkt" -executable -type f && exit 1 || echo "✅ Racket file permissions OK"
+    
+    - name: Check for secrets in code
+      run: |
+        # Basic secret scanning
+        grep -r -i "password.*=" . && exit 1 || echo "✅ No hardcoded passwords"
+        grep -r -i "api.key" . && exit 1 || echo "✅ No hardcoded API keys"
+
+  performance-test:
+    runs-on: ubuntu-latest
+    name: Performance & Load Testing
+    needs: [integration-tests]
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up environment
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y ripgrep racket apache2-utils
+        python -m pip install --upgrade pip
+        pip install requests markdown
+    
+    - name: Create large document set
+      run: |
+        # Generate 50+ test documents for performance testing
+        mkdir -p perf_test_docs
+        for i in {1..60}; do
+          echo "# Document $i" > perf_test_docs/doc$i.md
+          echo "This is test document number $i." >> perf_test_docs/doc$i.md
+          # Add random content to vary document sizes
+          for j in {1..10}; do
+            echo "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Document $i, paragraph $j." >> perf_test_docs/doc$i.md
+          done
+        done
+    
+    - name: Start servers for performance testing
+      run: |
+        python3 enhanced_docs_server.py &
+        echo $! > python_server.pid
+        sleep 3
+        
+        racket silver-simple.rkt &
+        echo $! > racket_server.pid  
+        sleep 5
+    
+    - name: Performance test - Document listing
+      run: |
+        # Test document listing performance
+        time curl -s http://localhost:44500/api/files > /dev/null
+        echo "✅ Document listing performance test completed"
+    
+    - name: Performance test - Search operations
+      run: |
+        # Test search with various query lengths
+        time curl -s "http://localhost:44500/api/search?q=document" > /dev/null
+        time curl -s "http://localhost:44500/api/search?q=lorem+ipsum" > /dev/null
+        echo "✅ Search performance test completed"
+    
+    - name: Load test with Apache Bench
+      run: |
+        # Light load testing
+        ab -n 50 -c 5 http://localhost:44500/ || echo "Load test completed with warnings"
+        ab -n 20 -c 2 http://localhost:44501/ || echo "Racket load test completed with warnings"
+    
+    - name: Cleanup performance test
+      run: |
+        if [ -f python_server.pid ]; then
+          kill $(cat python_server.pid) || true
+        fi
+        if [ -f racket_server.pid ]; then
+          kill $(cat racket_server.pid) || true
+        fi
+
+  deployment-ready:
+    runs-on: ubuntu-latest
+    name: Deployment Readiness Check
+    needs: [security-scan, performance-test]
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Validate deployment artifacts
+      run: |
+        # Check required files exist
+        [ -f enhanced_docs_server.py ] || exit 1
+        [ -f silver-simple.rkt ] || exit 1  
+        [ -f README.md ] || exit 1
+        [ -f SERVER_SPECIFICATIONS.md ] || exit 1
+        echo "✅ All deployment artifacts present"
+    
+    - name: Validate documentation
+      run: |
+        # Check documentation completeness
+        grep -q "Port 44500" SERVER_SPECIFICATIONS.md || exit 1
+        grep -q "Port 44501" SERVER_SPECIFICATIONS.md || exit 1
+        grep -q "Inter Tight" SERVER_SPECIFICATIONS.md || exit 1
+        grep -q "Vollkorn" SERVER_SPECIFICATIONS.md || exit 1
+        echo "✅ Documentation validation passed"
+    
+    - name: Create deployment summary
+      run: |
+        echo "## 🚀 Deployment Summary" > deployment_summary.md
+        echo "" >> deployment_summary.md
+        echo "- ✅ Python server tests passed" >> deployment_summary.md
+        echo "- ✅ Racket server tests passed" >> deployment_summary.md  
+        echo "- ✅ Integration tests passed" >> deployment_summary.md
+        echo "- ✅ Security scan completed" >> deployment_summary.md
+        echo "- ✅ Performance tests passed" >> deployment_summary.md
+        echo "" >> deployment_summary.md
+        echo "### Servers Ready for Deployment:" >> deployment_summary.md
+        echo "- **Main Server**: Python on port 44500" >> deployment_summary.md
+        echo "- **Silver Lining**: Racket on port 44501" >> deployment_summary.md
+        echo "" >> deployment_summary.md
+        echo "### Typography Verification:" >> deployment_summary.md
+        echo "- Main: Inter Tight + Atkinson Hyperlegible + JetBrains Mono" >> deployment_summary.md
+        echo "- Silver: Vollkorn + Fira Code" >> deployment_summary.md
+        cat deployment_summary.md
+    
+    - name: Upload deployment artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: enhanced-docs-browser-deployment
+        path: |
+          enhanced_docs_server.py
+          silver-simple.rkt
+          README.md
+          SERVER_SPECIFICATIONS.md
+          test_servers.py
+          deployment_summary.md

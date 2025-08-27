@@ -116,6 +116,7 @@
   (printf "🚀 Silver Lining serving at http://localhost:~a\n" *port*)
   (serve/servlet app
                  #:port *port*
+                 #:listen-ip "0.0.0.0"
                  #:servlet-regexp #rx""
                  #:servlet-path "/"))
 
