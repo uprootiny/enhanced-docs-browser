@@ -44,6 +44,9 @@ class EnhancedDocsHandler(BaseHTTPRequestHandler):
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Documentation Browser</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600;700&family=Jetbrains+Mono:wght@400;500&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
     <style>
         :root {
             /* Fluid Typography */
@@ -95,7 +98,7 @@ class EnhancedDocsHandler(BaseHTTPRequestHandler):
         }
         
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Open Sans', 'Helvetica Neue', sans-serif;
+            font-family: 'Inter Tight', 'Atkinson Hyperlegible', sans-serif;
             line-height: 1.6;
             color: #2d3748;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -386,7 +389,7 @@ class EnhancedDocsHandler(BaseHTTPRequestHandler):
         .file-path {
             font-size: 0.9rem;
             color: #718096;
-            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
         }
         
         .search-results {
@@ -417,7 +420,7 @@ class EnhancedDocsHandler(BaseHTTPRequestHandler):
         }
         
         .result-context {
-            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
             font-size: 0.9rem;
             background: white;
             padding: 0.5rem;
@@ -792,7 +795,7 @@ class EnhancedDocsHandler(BaseHTTPRequestHandler):
         }}
         
         body {{
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Open Sans', 'Helvetica Neue', sans-serif;
+            font-family: 'Inter Tight', 'Atkinson Hyperlegible', sans-serif;
             line-height: 1.7;
             color: #2d3748;
             background: #f7fafc;
@@ -821,7 +824,7 @@ class EnhancedDocsHandler(BaseHTTPRequestHandler):
         }}
         
         .file-path {{
-            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
             opacity: 0.9;
             font-size: 0.9rem;
         }}
@@ -877,7 +880,7 @@ class EnhancedDocsHandler(BaseHTTPRequestHandler):
             background: #edf2f7;
             padding: 0.2rem 0.4rem;
             border-radius: 4px;
-            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
             font-size: 0.9em;
         }}
         

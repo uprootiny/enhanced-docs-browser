@@ -31,8 +31,11 @@
    `(html 
      (head (title ,title)
            (meta ((charset "utf-8")))
+           (link ((rel "preconnect") (href "https://fonts.googleapis.com")))
+           (link ((rel "preconnect") (href "https://fonts.gstatic.com") (crossorigin "")))
+           (link ((rel "stylesheet") (href "https://fonts.googleapis.com/css2?family=Vollkorn:ital,wght@0,400;0,600;1,400&family=Fira+Code:wght@400;500&family=Inter+Tight:wght@300;400;500;600&display=swap")))
            (style "
-             body { font-family: Georgia, serif; max-width: 900px; 
+             body { font-family: 'Vollkorn', 'Crimson Text', 'Lora', serif; max-width: 900px; 
                     margin: 0 auto; padding: 2rem; line-height: 1.7;
                     background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 100%);
                     color: #cccccc; }
@@ -51,7 +54,10 @@
                           border-radius: 8px; margin: 2rem 0; }
              .back { color: #74b9ff; text-decoration: none; }
              .back:hover { text-decoration: underline; }
-             pre { background: rgba(0,0,0,0.4); padding: 1rem; overflow-x: auto; }
+             pre { background: rgba(0,0,0,0.4); padding: 1rem; overflow-x: auto; 
+                   font-family: 'Fira Code', 'Cascadia Code', 'JetBrains Mono', monospace; }
+             code { font-family: 'Fira Code', 'Cascadia Code', 'JetBrains Mono', monospace; }
+             .essay-card h3 { font-family: 'Inter Tight', sans-serif; font-weight: 500; }
            "))
      (body ,@body))))
 
