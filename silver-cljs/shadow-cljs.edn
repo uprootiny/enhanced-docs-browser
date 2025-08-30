@@ -1,0 +1,20 @@
+{:source-paths ["src/cljs"]
+ 
+ :dependencies [[reagent "1.2.0"]
+                [re-frame "1.3.0"]
+                [cljs-ajax "0.8.4"]
+                [day8.re-frame/http-fx "0.2.4"]
+                [binaryage/devtools "1.0.6"]]
+
+ :dev-http {45503 "resources/public"}
+ 
+ :builds
+ {:app {:target :browser
+        :output-dir "resources/public/js/compiled"
+        :asset-path "/js/compiled"
+        :modules {:main {:entries [silver.core]
+                        :init-fn silver.core/init}}
+        :compiler-options {:external-config {:react {:import-names "React"}}
+                          :closure-warnings {:check-types :off}}
+        :devtools {:http-root "resources/public"
+                   :http-port 45503}}}}
