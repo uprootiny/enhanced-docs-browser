@@ -1,4 +1,4 @@
-#!/usr/bin/env -S uv run --with requests python3
+#!/usr/bin/env -S uv run python3
 
 """
 🌙 ClojureScript Silver Lining Server
