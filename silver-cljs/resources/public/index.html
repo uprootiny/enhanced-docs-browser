@@ -76,6 +76,42 @@
       font-size: 1.2rem;
       opacity: 0.8;
       animation: fadeInUp 0.8s var(--transition-smooth) 0.2s both;
+      margin-bottom: 1rem;
+    }
+    
+    .usage-hints {
+      max-width: 800px;
+      margin: 0 auto 2rem;
+      background: rgba(255,255,255,0.03);
+      border-radius: 12px;
+      padding: 1rem 1.5rem;
+      font-size: 0.9rem;
+      line-height: 1.4;
+      animation: fadeInUp 0.8s var(--transition-smooth) 0.4s both;
+    }
+    
+    .hint-section {
+      margin-bottom: 0.8rem;
+    }
+    
+    .hint-title {
+      color: #ff6b9d;
+      font-weight: 500;
+      margin-bottom: 0.3rem;
+    }
+    
+    .hint-text {
+      color: rgba(255,255,255,0.7);
+    }
+    
+    .kbd {
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 4px;
+      padding: 0.1rem 0.4rem;
+      font-family: 'Fira Code', monospace;
+      font-size: 0.8rem;
+      color: #a8b5ff;
     }
     
     @keyframes fadeInUp {
@@ -513,7 +549,36 @@
 
 <body>
   <div id="app">
-    <div class="loading-state">🌙 Initializing Silver Lining...</div>
+    <div class="silver-app">
+      <div class="app-header">
+        <h1 class="app-title">🌙 Silver Lining Laboratory</h1>
+        <div class="app-subtitle">Sophisticated semantic exploration with multi-tier randomness</div>
+        
+        <div class="usage-hints">
+          <div class="hint-section">
+            <div class="hint-title">🔍 Search & Explore</div>
+            <div class="hint-text">Type in the search box to find concepts, ideas, or themes. Live suggestions appear as you type. Try searching for "complexity", "system", or "thinking".</div>
+          </div>
+          
+          <div class="hint-section">
+            <div class="hint-title">🧠 Clustering Methods</div>
+            <div class="hint-text">Switch between <span class="kbd">semantic</span>, <span class="kbd">temporal</span>, <span class="kbd">structural</span>, <span class="kbd">complexity</span>, and <span class="kbd">hybrid</span> clustering. Each uses different randomness sources for varied exploration.</div>
+          </div>
+          
+          <div class="hint-section">
+            <div class="hint-title">🎲 Stochastic Features</div>
+            <div class="hint-text">The system uses entropy-weighted selection with temporal variance, complexity-driven decisions, and controlled jitter. Every refresh reveals different clustering perspectives.</div>
+          </div>
+          
+          <div class="hint-section">
+            <div class="hint-title">📊 Interactive Controls</div>
+            <div class="hint-text">Adjust complexity ranges, click cluster names to filter, select documents to see similar ones. Switch between <span class="kbd">Grid</span> and <span class="kbd">List</span> views for different perspectives.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="loading-state" style="display: none;">🌙 Initializing Silver Lining...</div>
   </div>
   
   <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>

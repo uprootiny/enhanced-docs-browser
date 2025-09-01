@@ -190,12 +190,42 @@
            [:div.similar-concepts
             (take 2 (:concepts similar-doc))]])]])))
 
+(defn usage-hints []
+  "Interactive usage instructions"
+  (let [show-hints? (r/atom true)]
+    (fn []
+      [:div.usage-hints
+       [:div {:style {:display "flex" :justify-content "space-between" :align-items "center" :margin-bottom "0.5rem"}}
+        [:div.hint-title "💡 Usage Guide"]
+        [:button {:style {:background "transparent" :border "1px solid rgba(255,255,255,0.2)" :color "#ff6b9d" :border-radius "4px" :padding "0.2rem 0.5rem" :cursor "pointer"}
+                  :on-click #(swap! show-hints? not)}
+         (if @show-hints? "Hide" "Show")]]
+       
+       (when @show-hints?
+         [:div
+          [:div.hint-section
+           [:div.hint-title "🔍 Search & Explore"]
+           [:div.hint-text "Type in the search box to find concepts, ideas, or themes. Live suggestions appear as you type. Try searching for \"complexity\", \"system\", or \"thinking\"."]]
+          
+          [:div.hint-section
+           [:div.hint-title "🧠 Clustering Methods"]
+           [:div.hint-text "Switch between " [:span.kbd "semantic"] ", " [:span.kbd "temporal"] ", " [:span.kbd "structural"] ", " [:span.kbd "complexity"] ", and " [:span.kbd "hybrid"] " clustering. Each uses different randomness sources for varied exploration."]]
+          
+          [:div.hint-section
+           [:div.hint-title "🎲 Stochastic Features"]
+           [:div.hint-text "The system uses entropy-weighted selection with temporal variance, complexity-driven decisions, and controlled jitter. Every refresh reveals different clustering perspectives."]]
+          
+          [:div.hint-section
+           [:div.hint-title "📊 Interactive Controls"]
+           [:div.hint-text "Adjust complexity ranges, click cluster names to filter, select documents to see similar ones. Switch between " [:span.kbd "Grid"] " and " [:span.kbd "List"] " views for different perspectives."]]])])))
+
 (defn main-app []
   "Main Silver Lining ClojureScript application"
   [:div.silver-app
    [:div.app-header
     [:h1.app-title "🌙 Silver Lining Laboratory"]
-    [:div.app-subtitle "Smooth semantic exploration with live clustering"]]
+    [:div.app-subtitle "Sophisticated semantic exploration with multi-tier randomness"]
+    [usage-hints]]
    
    [:div.app-controls
     [live-search-box]
