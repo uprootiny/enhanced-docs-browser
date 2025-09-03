@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run --with markdown --with requests python3
 """
 Enhanced documentation server with ripgrep search and beautiful typography.
 """
@@ -573,16 +573,7 @@ class EnhancedDocsHandler(BaseHTTPRequestHandler):
             # Use ripgrep to find all .md files, excluding noise directories
             result = subprocess.run([
                 'rg', '--files', '--type', 'md', 
-                '--glob', '!node_modules/**',
-                '--glob', '!.git/**',
-                '--glob', '!**/node_modules/**',
-                '--glob', '!**/.git/**',
-                '--glob', '!backup/**',
-                '--glob', '!**/.npm/**',
-                '--glob', '!**/.cache/**',
-                '--glob', '!**/venv/**',
-                '--glob', '!**/__pycache__/**',
-                '/home/uprootiny'
+                '/home/uprootiny/essays'
             ], capture_output=True, text=True, timeout=10)
             
             files = []
@@ -591,9 +582,19 @@ class EnhancedDocsHandler(BaseHTTPRequestHandler):
                     if line:
                         path = line.strip()
                         name = os.path.basename(path)
+                        
+                        # Load content for API
+                        content = ""
+                        try:
+                            with open(path, 'r', encoding='utf-8') as f:
+                                content = f.read()
+                        except Exception:
+                            content = ""  # Empty content if file can't be read
+                        
                         files.append({
                             'name': name,
-                            'path': path
+                            'path': path,
+                            'content': content
                         })
             
             # Sort by name
@@ -622,16 +623,7 @@ class EnhancedDocsHandler(BaseHTTPRequestHandler):
             # Use ripgrep for fast search, excluding noise directories
             result = subprocess.run([
                 'rg', '--type', 'md', '-n', '-C', '2', '-i', query,
-                '--glob', '!node_modules/**',
-                '--glob', '!.git/**', 
-                '--glob', '!**/node_modules/**',
-                '--glob', '!**/.git/**',
-                '--glob', '!backup/**',
-                '--glob', '!**/.npm/**',
-                '--glob', '!**/.cache/**',
-                '--glob', '!**/venv/**',
-                '--glob', '!**/__pycache__/**',
-                '/home/uprootiny'
+                '/home/uprootiny/essays'
             ], capture_output=True, text=True, timeout=10)
             
             results = []
@@ -701,12 +693,7 @@ class EnhancedDocsHandler(BaseHTTPRequestHandler):
             # Use ripgrep to get a sample of document content for analysis
             result = subprocess.run([
                 'rg', '--files', '--type', 'md', 
-                '--glob', '!node_modules/**',
-                '--glob', '!.git/**',
-                '--glob', '!**/node_modules/**',
-                '--glob', '!**/.git/**',
-                '--glob', '!backup/**',
-                '/home/uprootiny'
+                '/home/uprootiny/essays'
             ], capture_output=True, text=True, timeout=10)
             
             files = []

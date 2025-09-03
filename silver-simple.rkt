@@ -15,7 +15,7 @@
 
 ;; Discovery - Unix to Memory
 (define (discover-essays)
-  (define cmd "find /home/uprootiny -name '*.md' -not -path '*/.*' -not -path '*/node_modules/*' | head -50")
+  (define cmd "find /home/uprootiny/essays -name '*.md' | head -50")
   (define paths (string-split (with-output-to-string 
                                (λ () (system cmd))) "\n"))
   (for ([path (filter non-empty-string? paths)])
